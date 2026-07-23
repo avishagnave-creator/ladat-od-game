@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>קוביית לדעת עוד</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f5;font-family:Arial,sans-serif}
+.scene{width:180px;height:180px;perspective:700px;margin:2rem auto 1rem}
+.cube{width:180px;height:180px;position:relative;transform-style:preserve-3d;transform:rotateX(-25deg) rotateY(35deg);transition:transform 1.4s cubic-bezier(0.23,1,0.32,1)}
+.face{position:absolute;width:180px;height:180px;border-radius:14px;backface-visibility:hidden;overflow:hidden;border:2px solid rgba(200,160,60,0.6);box-shadow:inset 0 0 12px rgba(0,0,0,0.3)}
+.face img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+.f-front {transform:translateZ(90px)}
+.f-back  {transform:rotateY(180deg) translateZ(90px)}
+.f-right {transform:rotateY(90deg) translateZ(90px)}
+.f-left  {transform:rotateY(-90deg) translateZ(90px)}
+.f-top   {transform:rotateX(90deg) translateZ(90px)}
+.f-bottom{transform:rotateX(-90deg) translateZ(90px)}
+.roll-btn{margin:0 auto 0.5rem;padding:12px 32px;border-radius:50px;border:none;background:#333;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.5px}
+.roll-btn:hover{background:#555}
+.result-label{font-size:16px;font-weight:700;color:#333;min-height:24px;text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="cube" id="cube">
+    <div class="face f-front"><img src="past.jpg" alt="עבר"></div>
+    <div class="face f-back"><img src="present.jpg" alt="הווה"></div>
+    <div class="face f-right"><img src="future.jpg" alt="עתיד"></div>
+    <div class="face f-left"><img src="task.jpg" alt="משימה"></div>
+    <div class="face f-top"><img src="joker.jpg" alt="ג'וקר"></div>
+    <div class="face f-bottom"><img src="free.jpg" alt="בחירה חופשית"></div>
+  </div>
+</div>
+
+<button class="roll-btn" onclick="roll()">זרוק קוביה</button>
+<div class="result-label" id="result"></div>
+
+<script>
+const faces=[
+  {rx:0,   ry:0,   name:'עבר'},
+  {rx:0,   ry:180, name:'הווה'},
+  {rx:0,   ry:-90, name:'עתיד'},
+  {rx:0,   ry:90,  name:'משימה'},
+  {rx:-90, ry:0,   name:"ג'וקר"},
+  {rx:90,  ry:0,   name:'בחירה חופשית'}
+];
+let absRX=-25,absRY=35,spinning=false;
+
+function roll(){
+  if(spinning)return;
+  spinning=true;
+  const cube=document.getElementById('cube');
+  const res=document.getElementById('result');
+  res.textContent='';
+  const spinRX=absRX+360*5+Math.floor(Math.random()*360);
+  const spinRY=absRY+360*5+Math.floor(Math.random()*360);
+  cube.style.transition='transform 1.4s cubic-bezier(0.23,1,0.32,1)';
+  cube.style.transform=`rotateX(${spinRX}deg) rotateY(${spinRY}deg)`;
+  setTimeout(()=>{
+    const f=faces[Math.floor(Math.random()*6)];
+    const baseRX=Math.round(spinRX/360)*360;
+    const baseRY=Math.round(spinRY/360)*360;
+    const landRX=baseRX+f.rx;
+    const landRY=baseRY+f.ry;
+    absRX=landRX;absRY=landRY;
+    cube.style.transition='transform 0.7s cubic-bezier(0.175,0.885,0.32,1.275)';
+    cube.style.transform=`rotateX(${landRX}deg) rotateY(${landRY}deg)`;
+    setTimeout(()=>{res.textContent='יצא: '+f.name;spinning=false;},750);
+  },1450);
+}
+</script>
+</body>
+</html>

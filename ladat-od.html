@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לדעת עוד - משחק קלפים זוגי</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#303aad">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="לדעת עוד">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      min-height: 100vh;
+      background: #ffffff;
+      color: #000;
+    }
+
+    /* ════════════════════════════════
+       PAGE SYSTEM
+    ════════════════════════════════ */
+    .page { display: none; flex-direction: column; align-items: center; min-height: 100vh; }
+    .page.active { display: flex; }
+
+    /* ════════════════════════════════
+       SPLASH SCREEN
+    ════════════════════════════════ */
+    .splash-page {
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      background: #ffffff;
+      transition: opacity 0.4s ease;
+      cursor: pointer;
+      user-select: none;
+      padding: 28px 20px;
+    }
+    .splash-page.splash-fade-out { opacity: 0; pointer-events: none; }
+
+    .splash-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .splash-main-img {
+      width: 100%;
+      max-width: 340px;
+      max-height: 60vh;
+      height: auto;
+      object-fit: contain;
+      object-position: center;
+      animation: splashRise 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes splashRise {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .splash-loader {
+      margin-top: 30px;
+      display: flex;
+      gap: 9px;
+    }
+    .splash-loader.hide { display: none; }
+    .splash-loader span {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #303aad;
+      animation: splashDotPulse 1.1s ease-in-out infinite;
+    }
+    .splash-loader span:nth-child(2) { animation-delay: 0.15s; }
+    .splash-loader span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes splashDotPulse {
+      0%, 80%, 100% { opacity: 0.35; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.15); }
+    }
+
+    .splash-enter-btn {
+      margin-top: 30px;
+      display: none;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: #fff;
+      background: #000;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 46px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+    .splash-enter-btn.show { display: block; animation: splashBtnIn 0.4s ease; }
+    @keyframes splashBtnIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .splash-enter-btn:hover  { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,0.5); }
+    .splash-enter-btn:active { transform: translateY(1px); }
+
+    .copyright-note {
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.72rem;
+      color: #999;
+      text-align: center;
+    }
+    .splash-copyright {
+      margin-top: 22px;
+      color: #aaa;
+    }
+
+    @media (max-width: 600px) {
+      .splash-main-img { max-width: 280px; max-height: 52vh; }
+      .splash-enter-btn { font-size: 1rem; padding: 13px 38px; margin-top: 24px; }
+      .splash-loader { margin-top: 24px; }
+      .splash-copyright { margin-top: 18px; }
+      .copyright-note { font-size: 0.66rem; }
+    }
+
+    /* ════════════════════════════════
+       INTRO PAGE
+    ════════════════════════════════ */
+    #page-intro {
+      padding: 32px 20px 50px;
+      background: #fff;
+    }
+
+    .intro-logo-tando {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .intro-logo-tando img { height: 130px; object-fit: contain; }
+
+    .intro-logo-game {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .intro-logo-game img { height: 108px; object-fit: contain; }
+
+    .intro-divider {
+      width: 60px;
+      height: 2px;
+      background: #e0e0e0;
+      margin: 0 auto 28px;
+    }
+
+    .intro-text {
+      max-width: 480px;
+      text-align: center;
+      margin: 0 auto;
+    }
+
+    .intro-text p {
+      font-size: 1.15rem;
+      line-height: 1.9;
+      color: #222;
+      margin-bottom: 10px;
+    }
+
+    .intro-text .how-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #111;
+      margin: 22px 0 8px;
+    }
+
+    .intro-text .how-body {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: #333;
+    }
+
+    .intro-text .take-time-note {
+      font-size: 1.28rem;
+      font-weight: 900;
+      color: #111;
+      margin-top: 14px;
+    }
+
+    /* mini static cards */
+    .mini-decks {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 28px 0 32px;
+    }
+    .mini-deck {
+      width: 76px;
+      height: 108px;
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .mini-deck::before {
+      content:''; position:absolute; width:100%; height:100%;
+      border-radius:12px; top:4px; right:4px; z-index:-1; opacity:.5;
+    }
+    .mini-deck::after {
+      content:''; position:absolute; width:100%; height:100%;
+      border-radius:12px; top:8px; right:8px; z-index:-2; opacity:.28;
+    }
+    .mini-deck img { width:100%; height:100%; object-fit:cover; display:block; }
+    .mini-deck-past    { background:#398297; }
+    .mini-deck-past::before { background:#2e6a7b; }
+    .mini-deck-past::after  { background:#255563; }
+    .mini-deck-present { background:#8ea78a; }
+    .mini-deck-present::before { background:#748871; }
+    .mini-deck-present::after  { background:#5d6e5b; }
+    .mini-deck-future  { background:#b085a8; }
+    .mini-deck-future::before  { background:#906d89; }
+    .mini-deck-future::after   { background:#74576e; }
+    .mini-deck-mission { background:#c26238; }
+    .mini-deck-mission::before { background:#9f502d; }
+    .mini-deck-mission::after  { background:#804024; }
+    .mini-deck-joker   { background:#40226b; }
+    .mini-deck-joker::before  { background:#341b57; }
+    .mini-deck-joker::after   { background:#2a1646; }
+    .mini-deck-free    { background:#80b6d5; }
+    .mini-deck-free::before  { background:#6895ae; }
+    .mini-deck-free::after   { background:#54788c; }
+
+    .decks-label-row {
+      display:flex; gap:14px; justify-content:center;
+      margin-bottom: 8px;
+    }
+    .decks-label-row span {
+      width:76px; text-align:center; font-size:0.72rem;
+      color:#888; font-weight:400;
+    }
+
+    .deck-list {
+      max-width: 480px;
+      margin: 0 auto 28px;
+      text-align: right;
+    }
+    .deck-list-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #111;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .deck-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .deck-list li {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: #333;
+      background: #faf9fc;
+      border-radius: 10px;
+      padding: 12px 16px;
+      border-right: 4px solid transparent;
+    }
+    .deck-list li strong { color: #111; font-weight: 900; }
+    .deck-list li.dl-past    { border-right-color:#398297; }
+    .deck-list li.dl-present { border-right-color:#8ea78a; }
+    .deck-list li.dl-future  { border-right-color:#b085a8; }
+    .deck-list li.dl-mission { border-right-color:#c26238; }
+    .deck-list li.dl-free    { border-right-color:#80b6d5; }
+    .deck-list li.dl-joker   { border-right-color:#40226b; }
+
+    .why-box {
+      background: #f9f7ff;
+      border-radius: 16px;
+      padding: 20px 24px;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto 32px;
+      text-align: center;
+    }
+    .why-box p {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #333;
+    }
+    .why-box strong { font-weight: 900; color: #111; }
+
+    .start-btn {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.2rem;
+      color: #fff;
+      background: linear-gradient(135deg, #444 0%, #111 100%);
+      border: none;
+      border-radius: 50px;
+      padding: 16px 48px;
+      cursor: pointer;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.22);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      margin-bottom: 8px;
+    }
+    .start-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.28); }
+    .start-btn:active { transform: translateY(1px); }
+
+    .install-btn {
+      display: none;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #303aad;
+      background: #fff;
+      border: 2px solid #303aad;
+      border-radius: 50px;
+      padding: 10px 24px;
+      cursor: pointer;
+      margin: 0 auto 18px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .install-btn.show { display: block; }
+    .install-btn:hover { background: #303aad; color: #fff; }
+
+    .signout-link {
+      font-size: 0.78rem;
+      color: #999;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* ════════════════════════════════
+       LOGIN PAGE
+    ════════════════════════════════ */
+    #page-login { justify-content: center; padding: 24px 16px; }
+    .login-box {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .login-logo { height: 84px; object-fit: contain; margin: 12px auto 24px; display: block; }
+    .login-loading { font-size: 0.95rem; color: #666; margin-top: 20px; }
+    .login-title { font-size: 1.2rem; font-weight: 900; color: #111; margin-bottom: 6px; }
+    .login-desc { font-size: 0.85rem; color: #666; margin-bottom: 20px; line-height: 1.6; }
+    .login-input {
+      width: 100%;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      padding: 13px 16px;
+      margin-bottom: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      text-align: right;
+      direction: ltr;
+      color: #111;
+    }
+    .login-input:focus { outline: none; border-color: #303aad; }
+    .login-input::placeholder { color: #aaa; direction: rtl; text-align: right; }
+    .login-submit-btn {
+      width: 100%;
+      font-size: 1.05rem;
+      padding: 14px;
+      margin-top: 6px;
+      background: linear-gradient(135deg, #3a4bc4 0%, #21297f 100%);
+    }
+    .login-error {
+      font-size: 0.85rem;
+      color: #c0392b;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+    .login-forgot {
+      font-size: 0.85rem;
+      color: #303aad;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* ════════════════════════════════
+       GAME PAGE
+    ════════════════════════════════ */
+    #page-game {
+      padding: 24px 16px 50px;
+    }
+
+    .logo-wrap { margin-bottom: 4px; text-align:center; width:100%; display:flex; justify-content:center; }
+    .logo-wrap img { height: 130px; object-fit:contain; }
+
+    .game-logo-name {
+      display:flex; justify-content:center; margin-bottom: 14px;
+    }
+    .game-logo-name img { height: 96px; object-fit:contain; }
+
+    /* turn + dice column */
+    .dice-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .turn-label-big {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: #303aad;
+      margin-bottom: 10px;
+    }
+    .turn-token-big {
+      width: 76px; height: 76px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 22px;
+      animation: turnTokenPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    .turn-token-big img { filter: drop-shadow(0 8px 12px rgba(0,0,0,0.28)); }
+    @keyframes turnTokenPop {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* used-cards pile */
+    .pile-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 28px 0 6px;
+    }
+    .pile-label {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 0.95rem;
+      color: #303aad;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .pile-stack-big {
+      position: relative;
+      width: 58px;
+      height: 78px;
+      margin-bottom: 10px;
+    }
+    .pile-card-big {
+      position: absolute;
+      width: 46px; height: 64px;
+      border-radius: 8px;
+      background: #303aad;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+    }
+    .pile-card-big:nth-child(1) { top: 11px; right: 11px; transform: rotate(-6deg); opacity: 0.55; }
+    .pile-card-big:nth-child(2) { top: 5px;  right: 5px;  transform: rotate(3deg);  opacity: 0.78; }
+    .pile-card-big:nth-child(3) { top: 0;    right: 0;    transform: rotate(-2deg); }
+    .pile-count-big {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #444;
+      text-align: center;
+    }
+
+    .manual-hint {
+      margin-top: 20px;
+      font-size: 0.78rem;
+      color: #111;
+      text-align: center;
+    }
+
+    .dice-result {
+      margin-top: 16px;
+      padding: 6px 22px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #fff;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+    }
+    .dice-result.show { opacity:1; transform:translateY(0); }
+    .dice-result.past    { background: #398297; }
+    .dice-result.present { background: #8ea78a; }
+    .dice-result.future  { background: #b085a8; }
+    .dice-result.mission { background: #c26238; }
+    .dice-result.free    { background: #6895ae; }
+    .dice-result.joker   { background: #40226b; }
+    .dice-result { max-width: 320px; text-align:center; }
+
+    /* ════════════════════════════════
+       3D DICE
+    ════════════════════════════════ */
+    .dice-scene {
+      width:94px; height:94px; perspective:500px;
+      margin: 4px auto 30px;
+      cursor:pointer;
+    }
+    .dice-cube {
+      width:94px; height:94px; position:relative;
+      transform-style:preserve-3d;
+      transform:rotateX(-25deg) rotateY(35deg);
+      transition:transform 1.4s cubic-bezier(0.23,1,0.32,1);
+    }
+    .dice-face {
+      position:absolute; width:94px; height:94px; border-radius:12px;
+      backface-visibility:hidden; overflow:hidden;
+      box-shadow:inset 0 0 10px rgba(0,0,0,0.25), 0 4px 14px rgba(0,0,0,0.18);
+      border:2px solid rgba(255,255,255,0.35);
+    }
+    .dice-face img { width:100%; height:100%; object-fit:cover; display:block; }
+    .dice-face-text {
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-family:'Heebo', sans-serif; font-weight:900;
+      font-size:0.92rem; text-align:center; line-height:1.25; padding:8px;
+    }
+
+    .dice-face.f-front  { transform:translateZ(47px); }
+    .dice-face.f-back   { transform:rotateY(180deg) translateZ(47px); }
+    .dice-face.f-right  { transform:rotateY(90deg) translateZ(47px); }
+    .dice-face.f-left   { transform:rotateY(-90deg) translateZ(47px); }
+    .dice-face.f-top    { transform:rotateX(90deg) translateZ(47px); }
+    .dice-face.f-bottom { transform:rotateX(-90deg) translateZ(47px); }
+
+    .roll-hint {
+      margin: 0 auto 26px;
+      font-family:'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: #111;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    .roll-hint:hover { color:#555; }
+
+    /* decks */
+    .decks-container {
+      display:flex; gap:28px; justify-content:center;
+      flex-wrap:wrap; margin: 4px 0 10px;
+    }
+    .deck {
+      width:160px; height:220px; border-radius:18px;
+      cursor:pointer; position:relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      overflow:hidden; user-select:none;
+    }
+    .deck::before {
+      content:''; position:absolute; width:100%; height:100%;
+      border-radius:18px; top:5px; right:5px; z-index:-1; opacity:.55;
+    }
+    .deck::after {
+      content:''; position:absolute; width:100%; height:100%;
+      border-radius:18px; top:10px; right:10px; z-index:-2; opacity:.3;
+    }
+    .deck img { width:100%; height:100%; object-fit:cover; display:block; }
+    .deck.highlighted { transform:translateY(-10px) scale(1.05); box-shadow:0 20px 48px rgba(0,0,0,0.28); }
+    .deck:not(.highlighted):hover { transform:translateY(-6px) scale(1.02); }
+    .deck.disabled { filter:grayscale(0.85) brightness(0.8); cursor:not-allowed; pointer-events:none; }
+    .deck.deck-exhausted {
+      filter:grayscale(0.9) brightness(0.65);
+      cursor:not-allowed;
+      pointer-events:none;
+    }
+    .deck.deck-exhausted::after {
+      content: 'סיימתם! ✓';
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      opacity: 1;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      border-radius: 18px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .deck-past    { background:#398297; }
+    .deck-past::before  { background:#2e6a7b; }
+    .deck-past::after   { background:#255563; }
+    .deck-present { background:#8ea78a; }
+    .deck-present::before { background:#748871; }
+    .deck-present::after  { background:#5d6e5b; }
+    .deck-future  { background:#b085a8; }
+    .deck-future::before  { background:#906d89; }
+    .deck-future::after   { background:#74576e; }
+    .deck-mission { background:#c26238; }
+    .deck-mission::before { background:#9f502d; }
+    .deck-mission::after  { background:#804024; }
+    .deck-joker   { background:#40226b; }
+    .deck-joker::before  { background:#341b57; }
+    .deck-joker::after   { background:#2a1646; }
+    .deck-free    { background:#80b6d5; }
+    .deck-free::before  { background:#6895ae; }
+    .deck-free::after   { background:#54788c; }
+
+    /* reset */
+    .reset-section {
+      display: flex;
+      justify-content: center;
+      margin: 26px 0 8px;
+    }
+    .reset-progress-btn {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #999;
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 50px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .reset-progress-btn:hover { color: #c0392b; border-color: #c0392b; }
+
+    /* character select page */
+    #page-characters {
+      justify-content: center;
+      align-items: center;
+      padding: 32px 20px;
+      background: #fff;
+      text-align: center;
+    }
+    .char-select-box { width: 100%; max-width: 420px; }
+    .char-select-title {
+      font-family: 'Heebo', sans-serif;
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: #111;
+      margin-top: 24px;
+      margin-bottom: 6px;
+    }
+    .char-select-sub {
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 26px;
+    }
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      justify-items: center;
+    }
+    .char-option {
+      width: 92px; height: 92px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .char-option img { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.2)); }
+    .char-option:hover { transform: translateY(-3px) scale(1.05); }
+    .char-option.taken { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+    .char-option.picked-anim { animation: charPicked 0.4s ease; }
+    @keyframes charPicked {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* modal */
+    .modal-overlay {
+      position:fixed; inset:0; display:none;
+      justify-content:center; align-items:center;
+      z-index:1000; backdrop-filter:blur(6px);
+    }
+    .modal-overlay.active { display:flex; }
+    .modal-overlay.bg-past,
+    .modal-overlay.bg-present,
+    .modal-overlay.bg-future,
+    .modal-overlay.bg-mission,
+    .modal-overlay.bg-free,
+    .modal-overlay.bg-joker { background:rgba(0,0,0,0.18); }
+
+    .modal-header { display:flex; flex-direction:column; align-items:center; margin-bottom:16px; }
+    .modal-header-icon { width:72px; height:72px; }
+    .modal-header-label {
+      font-family:'Heebo',sans-serif; font-weight:900; font-size:1.6rem;
+      color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.3); margin-top:6px;
+    }
+
+    .card-container { perspective:1000px; }
+    .card {
+      width:320px; height:460px; position:relative;
+      transform-style:preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.175,0.885,0.32,1.275);
+      cursor:pointer;
+    }
+    .card.flipped { transform:rotateY(180deg); }
+    .card-face {
+      position:absolute; inset:0; backface-visibility:hidden;
+      border-radius:22px; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      box-shadow:0 24px 70px rgba(0,0,0,0.32);
+      overflow:hidden;
+    }
+    .card-back-img { width:100%; height:100%; object-fit:cover; display:block; }
+    .card-past   .card-back { background:#398297; }
+    .card-present .card-back { background:#8ea78a; }
+    .card-future  .card-back { background:#b085a8; }
+    .card-mission .card-back { background:#c26238; }
+    .card-free    .card-back { background:#80b6d5; }
+    .card-joker   .card-back { background:#40226b; }
+
+    .card-front {
+      transform:rotateY(180deg); padding:24px 28px;
+      text-align:center; flex-direction:column; gap:0;
+      overflow-y:auto;
+    }
+    .card-past   .card-front { background:#e1ecef; }
+    .card-present .card-front { background:#eef1ed; }
+    .card-future  .card-front { background:#f3ecf1; }
+    .card-mission .card-front { background:#f5e7e1; }
+    .card-free    .card-front { background:#ebf4f8; }
+    .card-joker   .card-front { background:#e2dde8; padding:20px 22px; }
+
+    .card-question-block {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 14px;
+    }
+
+    .ask-hint {
+      font-size:1rem; color:#6a6a6a; font-weight:800;
+      margin-bottom:6px; text-align:center; display:none;
+    }
+    .ask-hint.show { display:block; }
+    .question-text {
+      font-size:1.7rem; line-height:1.75; color:#1a1a1a;
+      font-weight:400; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; text-align:center;
+      white-space: pre-line;
+    }
+    .card-joker .question-text {
+      font-size:1.12rem; line-height:1.5;
+      justify-content:center; padding-top:0;
+    }
+    .card-free .question-text {
+      font-size:1.15rem; line-height:1.6;
+      justify-content:center; padding-top:0;
+    }
+    .joker-title { font-weight:900; font-size:1.2em; line-height:1.3; display:block; margin-bottom:10px; }
+    .card-category-label { margin-top:14px; font-size:1rem; color:#111; font-weight:900; letter-spacing:.08em; }
+    .tap-hint { margin-top:6px; font-size:0.75rem; color:#8a8a8a; }
+
+    @media (max-width:600px) {
+      .deck { width:100px; height:148px; }
+      .card { width:288px; height:420px; }
+      .question-text { font-size:1.08rem; }
+      .ask-hint { font-size:0.9rem; margin-bottom:5px; }
+      .card-joker .question-text { font-size:1rem; line-height:1.45; }
+      .card-free .question-text { font-size:1.02rem; line-height:1.5; }
+      .joker-title { font-size:1.15em; margin-bottom:8px; }
+      .decks-container { gap:14px; }
+      .mini-deck { width:64px; height:92px; }
+
+      .dice-scene, .dice-cube { width:72px; height:72px; }
+      .dice-face-text { font-size:0.68rem; padding:4px; }
+      .dice-scene { perspective:380px; }
+      .dice-face { width:72px; height:72px; border-radius:10px; }
+      .dice-face.f-front  { transform:translateZ(36px); }
+      .dice-face.f-back   { transform:rotateY(180deg) translateZ(36px); }
+      .dice-face.f-right  { transform:rotateY(90deg) translateZ(36px); }
+      .dice-face.f-left   { transform:rotateY(-90deg) translateZ(36px); }
+      .dice-face.f-top    { transform:rotateX(90deg) translateZ(36px); }
+      .dice-face.f-bottom { transform:rotateX(-90deg) translateZ(36px); }
+      .roll-hint { font-size:0.92rem; }
+
+      .char-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+      .char-option { width: 68px; height: 68px; }
+      .char-select-title { font-size: 1.12rem; }
+
+      .turn-token-big { width: 60px; height: 60px; margin-bottom: 16px; }
+      .turn-label-big { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PAGE -1 — SPLASH (מסך פתיחה)
+══════════════════════════════════════ -->
+<div class="page active splash-page" id="page-splash">
+  <div class="splash-content">
+    <img class="splash-main-img" src="splash-main.jpg" alt="לדעת עוד - משחק קלפים לשיפור ושימור הקשר, מבית טנדו">
+    <div class="splash-loader" id="splashLoader">
+      <span></span><span></span><span></span>
+    </div>
+    <button class="splash-enter-btn" id="splashEnterBtn">כניסה למשחק</button>
+    <p class="copyright-note splash-copyright">© אבישג נווה — כל הזכויות שמורות</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 0 — LOGIN (הגנת גישה)
+══════════════════════════════════════ -->
+<div class="page" id="page-login">
+
+  <div class="intro-logo-tando">
+    <img src="tando-logo.png" alt="טנדו – בשביל הזוגיות">
+  </div>
+
+  <div class="login-box">
+    <img class="login-logo" src="ladat-od.jpg" alt="לדעת עוד">
+
+    <p class="login-loading" id="loginLoading">בודקים אם אתם כבר מחוברים...</p>
+
+    <div class="login-form" id="loginForm" style="display:none;">
+      <p class="login-title">כניסה למשחק</p>
+      <p class="login-desc">פרטי ההתחברות נשלחו אליכם במייל לאחר הרכישה.</p>
+      <input type="email" id="loginEmail" class="login-input" placeholder="אימייל" autocomplete="username">
+      <input type="password" id="loginPassword" class="login-input" placeholder="סיסמה" autocomplete="current-password">
+      <button class="start-btn login-submit-btn" onclick="doLogin()">התחברות</button>
+      <p class="login-error" id="loginError"></p>
+      <p class="login-forgot" onclick="doForgotPassword()">שכחתי סיסמה</p>
+    </div>
+  </div>
+
+  <p class="copyright-note" style="margin-top:20px;">© אבישג נווה — כל הזכויות שמורות</p>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 1 — INTRO
+══════════════════════════════════════ -->
+<div class="page" id="page-intro">
+
+  <!-- Tando logo -->
+  <div class="intro-logo-tando">
+    <img src="tando-logo.png" alt="טנדו – בשביל הזוגיות">
+  </div>
+
+
+  <!-- Game name logo -->
+  <div class="intro-logo-game">
+    <img src="ladat-od.jpg" alt="לדעת עוד">
+  </div>
+
+  <div class="intro-divider"></div>
+
+  <!-- Intro text -->
+  <div class="intro-text">
+    <p>פנו לכם זמן שהוא רק של שניכם!<br>מניחים את הטלפונים בצד, מכבים את הטלוויזיה,<br>ומתרכזים רק בלהיות יחד.<br>שבו בנוח אחד מול השני,<br>זה הזמן "לדעת עוד" על האדם האהוב שמולכם!</p>
+
+    <p class="how-title">איך משחקים?</p>
+    <p class="how-body">המשחק מורכב מקלפי שאלות ומקלפי משימות.<br>כל אחד בוחר לעצמו דמות של משחק (בדף הבא).</p>
+    <p class="how-body">בכל תור, מי שהדמות שלו מופיעה מעל הקוביה,<br>לוחץ על הקוביה ומגריל קלף משחק.</p>
+    <p class="how-body">אם זו שאלה - שואלים את בן/בת הזוג את השאלה שמופיעה על הקלף<br>ובודקים את הידע שלו עליכם.<br>במידה והוא/היא אינם יודעים את התשובה,<br>זה הזמן לשתף ולגרום להם "לדעת עוד" עליכם.</p>
+    <p class="how-body">אם זה קלף משימה – בצעו אותה לבד או ביחד בזרימה,<br>בהומור ובשובבות.</p>
+    <p class="how-body take-time-note">חלק מהשאלות דורשות חשיבה — קחו את הזמן ואל תמהרו עם התשובה.</p>
+  </div>
+
+  <!-- Mini static cards -->
+  <div class="mini-decks">
+    <div class="mini-deck mini-deck-past">
+      <img src="past.jpg" alt="עבר">
+    </div>
+    <div class="mini-deck mini-deck-present">
+      <img src="present.jpg" alt="הווה">
+    </div>
+    <div class="mini-deck mini-deck-future">
+      <img src="future.jpg" alt="עתיד">
+    </div>
+    <div class="mini-deck mini-deck-mission">
+      <img src="task.jpg" alt="משימות">
+    </div>
+    <div class="mini-deck mini-deck-joker">
+      <img src="joker.jpg" alt="ג'וקר">
+    </div>
+    <div class="mini-deck mini-deck-free">
+      <img src="free_choice.jpg" alt="בחירה חופשית">
+    </div>
+  </div>
+
+  <!-- Deck descriptions -->
+  <div class="deck-list">
+    <p class="deck-list-title">לפניכם 6 חפיסות קלפים:</p>
+    <ul>
+      <li class="dl-past"><strong>עבר:</strong> שאלות שמזמינות אתכם לגלות כמה אתם באמת יודעים על הסיפור של בן/בת הזוג. לא יודעים את התשובה? זה הזמן המושלם להקשיב, ללמוד ולגלות סודות ופרטים חדשים.</li>
+      <li class="dl-present"><strong>הווה:</strong> שאלות שפותחות צוהר ל"כאן ועכשיו" שלכם. הזדמנות לשתף במחשבות, ברגשות ובמה שעובר עליכם בתקופה הזו.</li>
+      <li class="dl-future"><strong>עתיד:</strong> הצצה לחלומות, לשאיפות ולתמונת העתיד המשותפת שאתם רוצים לבנות יחד.</li>
+      <li class="dl-mission"><strong>משימה:</strong> קלפים אינטראקטיביים, שובבים ומצחיקים, שמטרתם לשבור את הקרח, לעורר מגע, קירבה ולחזק את החיבור הפיזי והרגשי ביניכם.</li>
+      <li class="dl-free"><strong>בחירה חופשית:</strong> הרשות לעקוף את התור! קלף שמאפשר לכם לבחור חפיסה לבקשתכם באותו הרגע.</li>
+      <li class="dl-joker"><strong>ג'וקר:</strong> קלפי הפתעה מיוחדים שמשנים את חוקי המשחק ויוצרים רגעים בלתי צפויים.</li>
+    </ul>
+  </div>
+
+  <!-- Why box -->
+  <div class="why-box">
+    <p>מחקרים מראים שזוגיות חסינה, מאושרת ומחוברת מבוססת על היכרות עמוקה והקשבה אמיתית.<br><strong>לדעת עוד</strong> היא הדרך הכי מהנה, קלילה ומקרבת להגיע לשם.<br>תהנו!</p>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">בואו נתחיל</button>
+  <button class="install-btn" id="installBtn" onclick="installApp()">📲 התקינו את המשחק כאפליקציה</button>
+  <p class="signout-link" onclick="doSignOut()">התנתקות</p>
+  <p class="copyright-note" style="margin-top:16px;">© אבישג נווה — כל הזכויות שמורות</p>
+
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PAGE 1.5 — CHARACTER SELECT
+══════════════════════════════════════ -->
+<div class="page" id="page-characters">
+
+  <div class="intro-logo-tando">
+    <img src="tando-logo.png" alt="טנדו – בשביל הזוגיות">
+  </div>
+
+  <div class="char-select-box">
+    <p class="char-select-title" id="charSelectTitle">שחקן/ית 1 — בחרו דמות</p>
+    <p class="char-select-sub">כל אחד/ת בוחר/ת דמות שתסמן מתי תורו/ה לשחק</p>
+    <div class="char-grid" id="charGrid"></div>
+  </div>
+
+  <p class="copyright-note" style="margin-top:24px;">© אבישג נווה — כל הזכויות שמורות</p>
+
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — GAME
+══════════════════════════════════════ -->
+<div class="page" id="page-game">
+
+  <!-- Tando logo -->
+  <div class="logo-wrap">
+    <img src="tando-logo.png" alt="טנדו – בשביל הזוגיות">
+  </div>
+
+  <!-- Game name logo -->
+  <div class="game-logo-name">
+    <img src="ladat-od.jpg" alt="לדעת עוד">
+  </div>
+
+  <!-- Turn + Dice column -->
+  <div class="dice-col">
+
+    <span class="turn-label-big">תור</span>
+    <span class="turn-token-big" id="turnTokenIcon"></span>
+
+    <p class="roll-hint" onclick="rollDice()">לחץ להטלת הקוביה</p>
+
+    <div class="dice-scene" onclick="rollDice()">
+      <div class="dice-cube" id="diceCube">
+        <div class="dice-face f-front dice-face-text" style="background:#398297;">עבר</div>
+        <div class="dice-face f-back dice-face-text" style="background:#8ea78a;">הווה</div>
+        <div class="dice-face f-right dice-face-text" style="background:#b085a8;">עתיד</div>
+        <div class="dice-face f-left dice-face-text" style="background:#c26238;">משימה</div>
+        <div class="dice-face f-top dice-face-text" style="background:#40226b;">ג'וקר</div>
+        <div class="dice-face f-bottom dice-face-text" style="background:#80b6d5;">בחירה חופשית</div>
+      </div>
+    </div>
+
+    <p class="manual-hint">ניתן לבחור קלף באופן עצמאי</p>
+    <div class="dice-result" id="diceResult"></div>
+
+  </div>
+
+  <!-- Decks -->
+  <div class="decks-container">
+
+    <div class="deck deck-past" id="deck-past" onclick="drawCard('past')">
+      <img src="past.jpg" alt="עבר">
+    </div>
+
+    <div class="deck deck-present" id="deck-present" onclick="drawCard('present')">
+      <img src="present.jpg" alt="הווה">
+    </div>
+
+    <div class="deck deck-future" id="deck-future" onclick="drawCard('future')">
+      <img src="future.jpg" alt="עתיד">
+    </div>
+
+    <div class="deck deck-mission" id="deck-mission" onclick="drawCard('mission')">
+      <img src="task.jpg" alt="משימות">
+    </div>
+
+    <div class="deck deck-joker" id="deck-joker" onclick="drawCard('joker')">
+      <img src="joker.jpg" alt="ג'וקר">
+    </div>
+
+    <div class="deck deck-free" id="deck-free" onclick="drawCard('free')">
+      <img src="free_choice.jpg" alt="בחירה חופשית">
+    </div>
+
+  </div>
+
+  <!-- Used cards pile -->
+  <div class="pile-section">
+    <p class="pile-label">הקלפים שעניתם עליהם</p>
+    <div class="pile-stack-big">
+      <div class="pile-card-big"></div>
+      <div class="pile-card-big"></div>
+      <div class="pile-card-big"></div>
+    </div>
+    <p class="pile-count-big" id="pileCount">0 מתוך 0</p>
+  </div>
+
+  <!-- Reset -->
+  <div class="reset-section">
+    <button class="reset-progress-btn" onclick="confirmResetProgress()">איפוס הכול מההתחלה</button>
+  </div>
+
+  <p class="copyright-note" style="margin:6px 0 20px;">© אבישג נווה — כל הזכויות שמורות</p>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="modal-header">
+        <svg class="modal-header-icon" id="modalHeaderIcon" viewBox="0 0 100 100" fill="none"></svg>
+        <span class="modal-header-label" id="modalHeaderLabel"></span>
+      </div>
+      <div class="card-container">
+        <div class="card" id="card" onclick="handleCardClick()">
+          <div class="card-face card-back">
+            <img class="card-back-img" id="backImg" src="" alt="">
+          </div>
+          <div class="card-face card-front">
+            <div class="card-question-block">
+              <p class="ask-hint" id="askHint"></p>
+              <p class="question-text" id="questionText"></p>
+            </div>
+            <div class="card-footer">
+              <span class="card-category-label" id="categoryLabel"></span>
+              <p class="tap-hint">לחצו שוב לסגירה</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── PAGE NAVIGATION ── */
+function startGame() {
+  document.getElementById('page-intro').classList.remove('active');
+  window.scrollTo(0,0);
+
+  /* תמיד מתחילים בחירת דמויות מאפס - שלב 1 עבור שני השחקנים - כדי למנוע
+     מצב מבלבל שבו נראה כאילו דמות "נבחרה" כבר עבור מישהו בלי לשאול. */
+  localStorage.removeItem('ladatOdPlayer1Token');
+  localStorage.removeItem('ladatOdPlayer2Token');
+
+  document.getElementById('page-characters').classList.add('active');
+  renderCharSelectStep();
+}
+
+function enterGamePage() {
+  document.getElementById('page-characters').classList.remove('active');
+  document.getElementById('page-game').classList.add('active');
+  renderTurnIndicator();
+  renderPileCount();
+  updateDeckExhaustionStates();
+  window.scrollTo(0,0);
+}
+
+/* ── QUESTIONS ── */
+const questions = {"past":["מי חבר/ת הילדות הקרוב/ה ביותר שלי?","למה התחפשתי בתור ילד/ה בפורים?","במה הכי אהבתי לשחק בתור ילד/ה?","באילו חוגים הייתי בילדותי?","איך ומתי למדתי לשחות?","מהי חווית הילדות הכי טובה שלי?","מהי חווית הילדות המאתגרת או הגרועה ביותר שלי?","איזה סוג תלמיד/ה הייתי בבית הספר היסודי?","מה החוויה הכי טובה שהייתה לי בתיכון?","באילו מגמות למדתי בתיכון?","איפה שירתתי בצבא, ובאיזה תפקיד?","מה הייתה העבודה הראשונה שלי בחיים?","מתי ואיך הוצאתי רישיון נהיגה?","מה היה המקצוע שהכי שנאתי בבית הספר?","מי היה/תה המורה שהשפיע/ה עלי הכי הרבה?","איזה שיר או להקה היו הפסקול של גיל הנעורים שלי?","מה היה המאכל שההורים שלי הכינו שהכי אהבתי?","האם היה לי בעל חיים בילדותי? איך קראו לו?","מי הכוכב/ת שהייתי \"דלוק/ה\" עליהם בגיל ההתבגרות?","איזה חפץ סנטימנטלי מהעבר שמרתי הכי הרבה שנים?","מה הייתה פדיחת הילדות הכי גדולה שלי?","איפה ביליתי את החופש הגדול שהכי נהניתי בו?","מה עשיתי עם המשכורת הראשונה שלי?","מה היה הטיול הראשון שלי לחו\"ל?","מה היה סגנון הלבוש הכי מוזר שאימצתי בגיל ההתבגרות?","איזה מאכל שנאתי כילד/ה והיום אני דווקא אוהב/ת?","האם היה לי אוסף כלשהו בילדותי?","מה הייתה תוכנית הרדיו שהייתי שומע/ת בלופים?","איזה ספר קראתי בילדותי שהשאיר עלי רושם עמוק?","האם הייתי ילד/ה שאוהב/ת לקחת סיכונים, או זהיר/ה?","מה היה השיר של הסלואו הראשון שלי?","איזה הרגל מעצבן היה לי שאימא שלי הייתה משתגעת ממנו?","מה היה הסרט הראשון שראיתי בקולנוע?","מה הייתה פציעת הילדות הכי משמעותית שלי?","איזה עבודה זמנית עשיתי בחופש הגדול כנער/ה?","מה היה המשחק המשפחתי שהכי אהבנו לשחק סביב השולחן בילדותי?","מי היה האדם המבוגר שהכי אהבתי ללכת אליו  (סבא, סבתא, דוד) ולמה?","איזו סדרת טלוויזיה מצוירת הייתה גורמת לי לרוץ למסך מיד כשחזרתי מהמסגרות?","מהו זיכרון הילדות הראשון והכי מוקדם שאני מצליח/ה לזכור?","איזה ריח מקפיץ אותי ברגע אחד חזרה לבית הילדות שלי?","מה הייתה החופשה המשפחתית הראשונה שבה הרגשתי עצמאי/ת?","מה היה הצעצוע שהלך איתי לכל מקום ולא הסכמתי לשחרר?","מה היה המרד או מעשה הקונדס הכי גדול שעשיתי כנער/ה?","מכל המקומות שגרתי בהם בעבר, איזה בית השאיר בי את החותם הכי עמוק?","כשהייתי ילד/ה - מה היה החלום שלי להיות בעתיד?","מה הייתה ההחלטה הכי אמיצה שלי לפני שהכרנו?","מה הדבר שאני הכי מתחרט/ת עליו מהעבר?","מה היה הרגע שבו הבנתי שאני כבר לא ילד/ה?","איזה מקום מהעבר הייתי רוצה לחזור אליו פעם אחת?","מה הייתה ההתאהבות הראשונה שלי ואיך הסתיימה?","מה הדבר שהכי קשה היה לי לוותר עליו כשגדלתי?","איזו שנה בחיי הייתה הכי משמעותית ולמה?","מה הייתה המתנה הכי מרגשת שקיבלתי אי פעם?","מה הייתה תקופת חיי הקשה ביותר ומה עזר לי לעבור אותה?","מי היה חבר הילדות שהכי התחרטתי שאיבדתי איתו קשר?","איזו תכונה של אחד ההורים שלי ירשתי ואני גאה בה?","מה היה הכינוי שקראו לי בילדותי ומה הסיפור מאחוריו?","איזו שכונה או רחוב מילדותי היית רוצה שילדיי יגדלו בה?","מה היא הבדיחה המשפחתית שחוזרת אצלי במשפחה כבר במשך שנים?","איזה תחביב של ההורים שלי ירשתי בלי לשים לב?","מה הייתה הנסיעה הכי ארוכה ברכב עם המשפחה ומה קרה בה?","איזה שיר שהיו שרים בבית עדיין מזיז לי משהו בפנים?","מה הייתה הקנייה הראשונה שעשיתי עם כסף שחסכתי לבד?","מי היה השכן שהשאיר בי זיכרון שלא נשכח ולמה?","מהו הרגע מהילדות שלי, שהייתי רוצה שיהיה מצולם בווידאו, כדי לראות אותו שוב?"],"present":["מי הם שני החברים/ות שהכי קרובים/ות אלי היום?","מהי הפעילות האהובה עלי בסוף השבוע?","מהו הבילוי המועדף עלי בערב?","מהו השיר שאני הכי אוהב/ת בתקופה הזו?","מהו הסרט, הספר או תכנית הטלוויזיה האהובים עלי עכשיו?","מהו הספורט החביב עלי (לצפייה או לתרגול)?","מהי המסעדה או המאכל האהובים עלי?","אילו מאכלים אני ממש לא אוהב/ת?","מהו טעם הגלידה המועדף עלי?","מהו המשקה המועדף עלי בבוקר?","מהו בעל החיים האהוב עלי?","איזו ארוחה במהלך היום הכי אהובה עלי?","איזו עונה בשנה אני הכי אוהב/ת?","מי קרוב/ת המשפחה האהוב/ה עלי?","מכל האנשים ששנינו מכירים, את מי אני הכי פחות אוהב/ת?","מהי התכונה שאני הכי מעריך/ה בבני אדם?","מה אני הכי פחות אוהב/ת לעשות מבין עבודות הבית?","מה מנחם אותי כשאני עצוב/ה או מוטרד/ת?","מיהו מקור התמיכה הגדול ביותר שלי (מלבדך)?","מהו החג האהוב עלי ביותר ולמה?","אילו מנהגים מבית הוריי חשוב לי לקיים בבית שלנו?","מה לדעתך הדבר שהכי השתנה בי בעשור האחרון?","במה לדעתך אני שונה היום מתחילת הקשר שלנו?","איזה הרגל זוגי יש לנו היום שלא היה לנו בעבר?","מה את/ה מרגיש/ה שהתחזק בזוגיות שלנו עם השנים?","אילו פערים שהיו לנו בעבר נפתרו או התרככו היום?","איך לדעתך הילדים שינו או ישנו את הדינמיקה הזוגית שלנו?","מתי הרגשת הכי קרוב/ה אלי בשנים האחרונות?","מתי הרגשת שהקשר שלנו דורש יותר עבודה מבעבר?","מהו הטריגר שהכי בקלות יכול להוציא אותי משיווי משקל?","מהו הדבר הקטן שאני עושה שמראה לך שאני מעריך/ה אותך גם בלי מילים?","מהו הדבר הראשון שאת/ה מבחין/ה בו כשאני נכנס/ת הביתה אחרי יום ארוך?","איזו מחמאה שאני נותן/ת לך בתקופה האחרונה באמת גורמת ללב שלך להתרחב?","מהו ה\"טקס\" הקטן שלנו במהלך השבוע שאת/ה הכי מחכה לו?","מתי לאחרונה הסתכלת עלי מהצד והרגשת גאווה גדולה בי?","מהו הנושא שבו יש לנו הבנה הכי עיוורת והרמונית כיום?","איזה שינוי שעשיתי בעצמי לאחרונה הכי משמח או מפתיע אותך?","מהו סגנון המוזיקה או הפודקאסט שאנחנו הכי אוהבים לשמוע יחד?","מהו המאכל המשותף שהפך ל\"מאכל הבית\" הרשמי שלנו?","איזה קושי חיצוני שפגשנו לאחרונה גרם לך להרגיש שאנחנו צוות מנצח?","מהו המקום בבית שבו את/ה הכי אוהב/ת לנהל איתי שיחות עמוקות?","מהי התכונה שלי שפעם הציקה לך והיום את/ה מקבל/ת אותה באהבה?","מה הדבר שאת/ה הכי גאה בו בעצמך כרגע?","מה הדבר שהכי מעייף אותך בשגרה היומית?","מה חסר לך כרגע בחיים שלך?","מה הדבר שהכי מרגיע אותך כשאת/ה בחרדה?","עם מי מחוץ למשפחה היית רוצה לבלות יותר זמן?","מה הדבר שהכי קשה לך להגיד לי?","מה גורם לך להרגיש הכי בטוח/ה בקשר שלנו?","מה הדבר שהכי מפחיד אותך בזוגיות שלנו כרגע?","מה היית רוצה לשנות בדרך שבה אנחנו מתקשרים?","מה הדבר הכי טוב שקרה לנו כזוג בשנה האחרונה?","איזה צד שלך את/ה מרגיש/ה שאני לא מכיר/ה מספיק?","מה הדבר שהכי מוציא אותך מאיזון בעבודה?","מה היית רוצה שנעשה יחד לפחות פעם בשבוע?","מה את/ה הכי מתגעגע/ת אליו מהזמן של לפני שהיו לנו ילדים או לפני שהתחתנו?","מה הדבר שהיית רוצה שאני אעשה יותר עבורך בשגרה?","מהי השעה ביום שבה את/ה הכי זקוק/ה לחיבור איתי?","מה הדבר שאם הייתי עושה אותו יותר, היה גורם לך להרגיש אהוב/ה יותר?","מהו הדבר שאני עושה שגורם לך להרגיש בבית?","איזו שיחה שהיתה לנו לאחרונה עדיין מהדהדת בך?","מה הדבר שאת/ה מרגיש/ה שעדיין לא אמרת לי ואת/ה רוצה שאדע?","מהו הרגע ביום שבו את/ה מרגיש/ה הכי טוב עם עצמך?","מה היית עושה היום אחרת אם ידעת שאני לא שופט/ת אותך עליו?","איזו תכונה שלך מרגישה לא מספיק מוערכת על ידי?"],"future":["איך נראית בעינייך זוגיות טובה ובריאה בגיל שלנו?","כשיגיע שינוי גדול - מה יעזור לך להרגיש שאנחנו צוות חזק?","מה אני יכול/ה לעשות שיעזור לך כשקשה לך?","מה יעזור לך להרגיש רצוי/ה ונבחר/ת גם בעתיד?","מה את/ה גאה בו בדרך שעברנו יחד?","איזה חלום זוגי היית רוצה שעוד נגשים יחד?","אם היית בוחר/ת מילה אחת שתלווה את הזוגיות שלנו קדימה - מה היא היתה?","איזה תחום חדש היית רוצה שננסה לחקור יחד?","בעוד 10 שנים - איזה מין זוג נהיה? מה נלבש, איפה נשב ועל מה נדבר?","מהו השינוי בבית שהיית רוצה שנעשה יחד?","אם היינו לומדים משהו חדש - מה לדעתך היה הכי מתאים לנו ללמוד?","מהו \"הסכם העבודה\" הלא כתוב שיעזור לנו בתקופות קשות?","מהו הדבר שאני יכול/ה לעזור לך להגשים בשנה הקרובה?","לאיזה מקום בעולם, שעוד לא היינו בו, היית רוצה שנטוס רק שנינו?","בעוד חמש שנים, איזו תכונה שלי היית רוצה שתישאר?","אם היינו כותבים \"סלוגן\" שילווה את המשפחה שלנו - מה הוא היה?","אם היינו עוברים לגור לחצי שנה ביעד מפתיע - איפה היית רוצה שזה יהיה?","איזו תכונה זוגית שלנו היית רוצה שנעביר לילדים כמודל?","מהו הדבר הקטן בשגרה שהיית רוצה שנשנה כדי להתחיל את היום מסונכרנים?","כשימי החורף יגיעו, איזה יום מפנק ביתי היית רוצה שנתכנן?","מהי המיומנות הפרקטית שהיית רוצה שאלמד ממך?","אם היית מעניק/ה לי \"מתנת חוויה \"עתידית - מה היית בוחר/ת?","מהו הפחד העתידי הכי גדול שלך ואיך אני יכול/ה להרגיע אותך?","אילו שיחות שחסרות לנו ביום-יום היית רוצה שנצליח לנהל בעתיד?","איזה שינוי קטן שנעשה עכשיו תרצה/י שנסתכל עליו בעוד חמש שנים ונגיד \"זה היה הרגע שבו הכל השתנה\"?","מהו הגבול הזוגי שחשוב לנו להמשיך לשמור עליו מול לחצים?","מהו \"יעד העל\" הזוגי שלנו לשלוש השנים הקרובות?","מהו הדבר שהיית רוצה שאגיד לך כשאת/ה מרגיש/ה פחות בטוח/ה?","כשנשב לשחק במשחק הזה בעוד שנה, איזה שינוי היית רוצה שנחגוג?","כשהילדים יגדלו ויפרשו כנפיים, מהו הדבר הראשון שאת/ה רוצה שנחזיר לשגרה הזוגית?","איזה סוג של סבים וסבתות את/ה מדמיין/ת שנהיה יחד?","מהו ההרגל השבועי החדש שהיית רוצה שנאמץ כבר מהחודש הקרוב?","לאיזו הופעה, פסטיבל או אירוע תרבותי היית רוצה שנלך יחד בשנים הקרובות?","מהו היעד האישי שאת/ה שואף/ת להגיע אליו, ואיך היית רוצה שאתמוך בך על מנת להשיגו?","איזה פרויקט התנדבותי או קהילתי משותף היית רוצה שניקח בו חלק?","מהו הזיכרון או אבן הדרך המשפחתית הבאה שאת/ה מצפה להגיע אליה?","אילו כלים שרכשנו יחד יעזרו לנו לצלוח את השינויים של הגיל?","מהו הדבר שהיית רוצה שנבטיח שלעולם לא נפסיק לעשות?","איזו מסורת זוגית סודית היית רוצה שנפתח לקראת השנים הבאות?","כשיגיעו ימים עמוסים בעתיד, מה יהיה משפט הקוד שלנו שיזכיר לנו לעצור ולנשום?","מה המטרה האישית הכי גדולה שלך לשנה הקרובה?","איזו מיומנות היית רוצה ללמד את הילדים שלנו?","איזו חוויה משפחתית היית רוצה שנייצר עם הילדים, לפני שהם עוזבים את הבית או אחרי שכבר עזבו?","מה היית עושה אילו ידעת שלא תיכשל?","איזה תחביב שנזנח היית רוצה להחזיר לחיים?","מה הדבר שהכי חשוב לך שילדינו יאמרו עלינו כשיגדלו?","מה היית עושה אחרת אם היינו מתחילים עכשיו את הקשר שלנו מחדש?","איך את/ה רואה את הפנסיה האידיאלית שלנו?","מה היית רוצה שנשיג כלכלית בעשור הקרוב?","איזו הבטחה היית רוצה שנבטיח אחד לשנייה עכשיו?","מה הדבר שהכי חשוב לך שנשפר בינינו בשנה הקרובה?","אם היינו כותבים ספר על הזוגיות שלנו - מה היתה הכותרת שלו?","מהי ההחלטה המשפחתית הכי גדולה שאת/ה מרגיש/ה שעוד לפנינו?","איזה ערך, שחשוב לך שילדינו יגדלו איתו, עדיין לא מספיק בא לידי ביטוי?","מה הדבר שהיית רוצה שנעשה יחד לראשונה בשנה הקרובה?","אם היה לנו חודש חופשה מלא ללא מחויבויות - מה היית מציע/ה שנעשה?","מהו השיעור הכי חשוב שלמדנו כזוג בעשור האחרון ואיך ניקח אותו קדימה?","איזה חלום שנראה בלתי אפשרי היית רוצה שנתחיל לתכנן?","כשנחגוג 10 שנות נישואים נוספות - מה היית רוצה שנאמר אחד לשני?","מהו הדבר שהיית רוצה שהדור הבא שלנו יזכור מהבית שגדל בו?","איזו נסיעה רומנטית לשניים חלמת עליה ועדיין לא יצאה לפועל?","מה הדבר שאת/ה הכי מתרגש/ת לחוות איתי בשלב הבא בחיים?","אם היינו מקיימים  \"טקס שנתי זוגי\" - מה הוא היה כולל?","איזה פוטנציאל זוגי שלנו עדיין לא מיצינו?","מה המשפט שהיית רוצה שאני אזכור ממך לתמיד?"],"mission":["עשו עיסוי אחד לשני במשך 5 דקות.","ספרו אחד לשני/ה על זיכרון משותף אחד שמעלה לכם חיוך.","כל אחד משתף מהו הדייט האידאלי מבחינתו.","צלמו יחד סלפי מצחיק.","רקדו ביחד לשיר אחד - כאן ועכשיו.","החליטו יחד על חמישה דברים משותפים שתרצו לעשות השנה.","חבקו אחד את השנייה במשך 60 שניות בלי לדבר.","כל אחד אומר 3 דברים שהוא/היא רוצה שיקרו בחודש הקרוב בכל תחום שהוא.","שבו גב אל גב. כל אחד מתאר את בן/בת הזוג בשלושה משפטים.","ציינו יחד שלושה שירים שמסמלים אתכם כזוג והשמיעו אחד מהם כרגע.","כל אחד משתף ברגע שבו הרגיש הכי מאוהב באחר.","שאלו אחד את השני שאלה שמעולם לא שאלתם.","כל אחד מציין שלושה דברים שהיה רוצה שישתנו בקשר. מקשיבים אחד לשני בלי להגיב.","אחד מכם עוצם את העיניים והאחר מוביל אותו בעדינות ברחבי החדר במשך דקה.","שתפו יחד מהם שלושת הרגעים הכי טובים שהיו לכם כזוג.","כל אחד עושה חיקוי של האחר במשך דקה (בלי לפגוע או להעליב).","השמיעו לבן/בת זוגכם שיר חדש שאתם אוהבים והסבירו למה אתם אוהבים אותו.","כל אחד מספר על משהו מיום החתונה שלכם שהכי ריגש אותו.","כל אחד משתף מה הדבר שהראשון שחשב כשראה את האחר בפעם הראשונה.","כל אחד משתף מה הוא מרגיש שהשתנה בו מאז החתונה.","כל אחד מספר על מה הוא/היא הכי מעריך/ה בשני/ה.","כל אחד משתף את בן/בת הזוג על חלום שיש לו שעדיין לא סיפר עליו.","התנשקו במשך 30 שניות רצופות - בלי הפסקה.","כל אחד מספר על הרגע בו הבין שזהו האדם שהוא רוצה לחיות איתו.","אמרו יחד 5 תכונות שמאפיינות אתכם כזוג.","כל אחד מספר על משהו שהאחר עשה לאחרונה שגרם לו להרגיש אהוב/ה.","כל אחד משתף למה הוא הכי מתגעגע אליו מתחילה הקשר.","דברו והחליטו יחד - מה תרצו שיאמרו עליכם כזוג בעוד 20 שנה.","שתפו שניכם על פחד שאתם מחזיקים בפנים ולא שיתפתם עד עכשיו.","כל אחד בוחר מילה אחת שמתארת את הקשר שלכם ומסביר למה המילה הזו נבחרה.","שבו פנים אל פנים והביטו בעיניים במשך דקה שלמה ללא דיבורים.\nתוך כדי, כל אחד, בעזרת יד ימין שלו, מלטף/ת את בן/בת הזוג.","כל אחד מכם מספר על רגע שבו האחר הפתיע אותו לטובה.","אמרו אחד/ת לשני/ה משהו שרציתם להגיד זמן רב אך תמיד דחיתם.","כתבו ביחד מכתב קצר לעצמכם כזוג לפתיחה בעוד שנה.","כל אחד מצייר את האחר תוך דקה אחת ומראים את התוצאות בו זמנית.","כל אחד מכם אומר לבן/בת הזוג \"אני אוהב/ת אותך כי...\" וסיימו את המשפט בדרך שלא אמרתם קודם.","אמרו יחד 3 דברים שאתם מודים עליהם בקשר שלכם - כאן ועכשיו.","כל אחד מכם נותן לבן/בת הזוג מחמאה ספציפית על משהו קטן וטוב שקרה בשבוע האחרון.","בחרו שיר ששניכם אוהבים ושירו יחד את המילים כאילו אתם בהופעה.","כל אחד כותב על דף קטן מילה אחת של השראה לחיים ומעניק לשני כ\"קמע\" לארנק.","המציאו יחד לחיצת יד סודית וייחודית רק של שניכם - ובצעו אותה בהצלחה.","ספרו לבן/בת זוגכם על משהו מצחיק או מביך שקרה השבוע ועדיין לא שיתפתם.","אחד מכם עוצם עיניים ומושיט יד קדימה. בן/בת הזוג להניח לו/ה חפץ קטן על כף היד לזיהוי.\nהחליפו תפקידים.","כתבו יחד \"הצהרת כוונות\" של משפט אחד לזוגיות שלכם והדביקו אותה במקום בולט.","עשו מחווה קטנה של פינוק - אחד מכם מכין לשני את המשקה שהוא הכי אוהב ברגע זה.","כל אחד אומר שלושה דברים שהוא אוהב בגוף של האחר.","שבו וצפו יחד בתמונות מהשנה הראשונה של הקשר.","שתפו – מתי הרגשתם גאווה גדולה בבן/בת זוגכם.","אימרו יחד 5 דברים שאתם טובים בהם כזוג.","כל אחד מכם משתף, מהו לדעתו הרגע הכי מצחיק שהיה לכם כזוג.","כל אחד מציג לשני שיר שהכי מתאר אותו בתקופה הזו.","צאו לטיול של 10 דקות, ללא טלפון. החזיקו ידיים במשך כל ההליכה.","כל אחד משתף מה הוא היה רוצה לשמוע יותר מהאחר.\nחישבו על דברים שנאמרו בעבר והיה לכם נעים לשמוע או כאלה שלא נאמרו והייתם רוצים שיאמרו.","כל אחד אומר לבן/בת זוגו \"תודה על...\" וסיימו עם משהו שלא אמרתם כבר הרבה מאוד זמן או בכלל.","החליפו תפקידים לרגע - כל אחד מתאר את היום האידאלי של האחר.","החליטו יחד על יום קבוע בשבוע בו תצפו יחד בסרט/סדרה תוך כדי שאתם שוכבים על הספה או במיטה מחובקים. נסו להפוך את זה להרגל קבוע.","אמרו כל אחד בנפרד מה הייתם רוצים לעשות ביחד שעוד לא עשיתם.","אמרו יחד 3 משפטים שמתארים את הזוגיות שלכם בצורה הכי יפה שאתם יכולים.","כל אחד אומר לבן/בת הזוג מהו הרגע, מהשבוע האחרון, בו הרגיש/ה הכי קירבה לאחר.","התחבקו ונסו לסנכרן את הנשימות – שאפו ונשפו יחד במשך דקה.","כל אחד משתף על תכונה שלו שבזכות האחר בולטת מאוד כלפי חוץ. אמרו את זה במשפט \"בזכותך אני יותר...\"","כתבו ביחד \"חוזה אושר\" – 3 דברים שאתם מתחייבים לעשות אחד לשני מהיום.","כל אחד משתף על חוויה שרוצה לחלוק עם האחר אבל עוד לא מצא את הרגע הנכון.","כל אחד מספר מה הוא הכי אוהב בדרך שבה האחר מתמודד עם רגעים קשים.","כל אחד מניח יד על הלב של האחר, ואומר משפט שמגיע מהלב – כאן ועכשיו."],"free":["בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך.","בחר/י אחת מהאופציות הבאות:\n1. קלף כרצונך מכל חפיסה.\n2. העברת התור לבן/בת הזוג.\n3. בחר/י קלף מכל חפיסה עבור בן/בת זוגך."],"joker":[{"title":"הסוד השמור","text":"לחש/י באוזן של בן/בת הזוג פנטזיה קטנה, מחמאה נועזת או זיכרון משותף ושובב שלכם מפעם, שאף אחד אחר בעולם לא יודע עליו."},{"title":"חיבוק בהילוך איטי","text":"עמדו והתחבקו חיבוק מלא (בטן אל בטן). הישארו בחיבוק הזה במשך 3 נשימות עמוקות ואיטיות, כאשר אתם מנסים לסנכרן את קצב הנשימה שלכם יחד."},{"title":"מתקפת דגדוגים מבוקרת","text":"מצא/י את הנקודה הכי רגישה של בן/בת הזוג (בלי להציק מדי!) ודגדג/י אותו/אותה במשך 15 שניות רצופות."},{"title":"ריקוד צמוד ללא מוזיקה","text":"קומו ורקדו יחד במשך דקה, ריקוד צמוד ואיטי.\nאל תשמיעו שום קול והקשיבו רק לפעימות הלב אחד של השני."},{"title":"חיקוי אוהב","text":"עלייך לחקות תנועה, משפט קבוע או הרגל משעשע של בן/בת הזוג. בן הזוג צריך לנחש מה את/ה מחקה (וכמובן לא להיעלב, הכל מאהבה)."},{"title":"קריאת מחשבות","text":"סיפרו יחד עד 3 וכל אחד צריך לומר מילה אחת שמתארת את מה שהוא מרגיש כרגע כלפי השני. נסו לראות אם קלעתם לאותה אנרגיה."},{"title":"מלצרות רומנטי","text":"במהלך 5 הדקות הבאות – עליך להפוך ל\"מלצר האישי\" של בן/בת זוגך: להגיש לו/ה שתייה, לפנק בכיבוד קל ולדבר במבטא מצחיק לבחירתך."},{"title":"הקשבה בעיניים עצומות","text":"אחד מכם עוצם עיניים למשך דקה שלמה, והשני צריך להוביל אותו ברחבי החדר רק באמצעות השמעת קולות."},{"title":"הצהרת אהבה דרמטית","text":"עמדו במרכז החדר והצהירו על דבר אחד שאתם אוהבים בבן/בת הזוג.\nעשו זאת בסגנון של שחקן/נית תיאטרון שייקספירי או כוכב/ת אופרת סבון מוגזם/מת."},{"title":"מדחום המחמאות","text":"עליכם להגיד לבן/בת הזוג שלוש מחמאות ברצף, כאשר כל מחמאה צריכה להיות \"חמה\" וממוקדת יותר בקשר הפיזי או במשיכה שלכם אליהם מהמחמאה הקודמת."},{"title":"סלפי שובב","text":"קחו את הטלפון הנייד שלכם וצלמו יחד את ה\"סלפי הכי מצחיק ושובב\" שאתם יכולים לחשוב עליו  (פרצופים, תנוחות מוזרות). התמונה הזו נשארת אצלכם כמזכרת מהערב."},{"title":"הודעה מהעתיד","text":"שלחו לבן/בת הזוג ברגע זה הודעת וואטסאפ שובבה או מסקרנת לגבי מה שיקרה כשתסיימו היום לשחק, אבל אל תגלו להם שום דבר מעבר לזה בשיחה פנים אל פנים.\nמותר לפתוח את ההודעה רק בתום המשחק."},{"title":"שיר בהקדשה אישית","text":"זמזמו או שירו יחד, בית אחד מתוך שיר אהבה ששניכם מכירים, אבל שנו את המילים כך שיכללו בדיחה פנימית שלכם או את השם של בן/בת הזוג."},{"title":"שפת הגב","text":"אחד מכם עוצם את העיניים.\nהשני צריך לכתוב מילה או לצייר צורה פשוטה על הגב שלו באמצעות האצבע בלבד.\nעליכם לנחש מה זה היה.\nהצלחתם? קבלו נשיקה.\nטעיתם? שלמו בנשיקה."},{"title":"נשיקה עיוורת","text":"עצמו את העיניים (שניכם!). עליכם למצוא את השפתיים אחד של השנייה ולתת נשיקה ארוכה של 10 שניות, אך ורק באמצעות חוש המישוש והשמיעה."},{"title":"המרענן הרשמי","text":"קחו שלוק ממשקה קר או חם ומיד לאחר מכן תנו לבן/בת הזוג נשיקה עדינה בצוואר או בלחי. הניגוד התחושתי יעשה את שלו."},{"title":"עיסוי אקספרס","text":"עליך להעניק לבן/בת זוגך עיסוי ממוקד של 2 דקות בכתפיים או בכפות הרגליים (לבחירתו/ה),\nבלי תירוצים ובלי לצפות לתמורה ברגע זה."},{"title":"מבט ללא מילים","text":"שבו קרוב מאוד.\nהסתכלו לבן/בת זוגכם עמוק בעיניים במשך דקה שלמה בלי לדבר.\nהראשון שמחייך, צוחק או מסיט את המבט – צריך לבצע משימה שתיבחר עבורו על ידי המנצח/ת, ברגע זה."},{"title":"משחק תפקידים","text":"במשך 3 הדקות הבאות, אתם זרים גמורים שנפגשו הרגע בבר. אחד מכם צריך להתחיל עם השני בצורה הכי קלישאתית או משעשעת שהוא יכול לחשוב עליה."},{"title":"הפסל והיוצר","text":"בן זוג אחד הופך ל\"פסל\" למשך דקה ולא זז. השני יכול להזיז אותו, לסדר את הידיים שלו ולעצב אותו באיזו תנוחה רומנטית או מצחיקה שעולה לו לראש."},{"title":"הקפטן של הערב","text":"מי שמשך את הקלף מקבל \"חסינות לרגע\" ויכול לבקש מבן/בת הזוג פינוק קטן אחד שקורה ממש עכשיו  (להביא משהו טעים, לסדר את הכרית, או פשוט חיבוק מוחץ)."},{"title":"קריאת שפתיים","text":"אחד מכם שם אוזניות עם מוזיקה רועשת (כך שהוא לא יכול לשמוע כלום). השני צריך לומר לו משפט שובב או אוהב, והראשון צריך לנחש מה נאמר רק לפי תנועת השפתיים."},{"title":"משחק השאלות","text":"חשבו על אירוע מעברכם.\nלבן/בת הזוג יש 20 שאלות של \"כן ולא\" לנחש מהו האירוע.\nעל כל ניחוש שמקבל את התשובה \"לא\" – הוא/היא מעניק/ה לכם נשיקה קטנה. כל פעם במקום אחר בגוף."},{"title":"מגנט אנושי","text":"במהלך 5 הדקות הבאות, בכל פעם שבן הזוג קם מהספה או זז למקום אחר בחדר, עליכם לקום אחריו ולהיצמד אליו פיזית (כמו מגנט) למשך 5 שניות, לא משנה מה הוא עושה."},{"title":"חמש נקודות","text":"עליכם להעניק לבן/בת הזוג 5 נשיקות קטנות במקומות שונים בגוף, כאשר כל נשיקה באיכות אחרת (נשיקה רכה, נשיקה מדגדגת, נשיקה חמה, נשיקה ארוכה ונשיקה מפתיעה)."},{"title":"שף בעיניים עצומות","text":"קחו חטיף, שוקולד או פרי, ממה שיש לכם בבית.\nעליכם להאכיל את בן/בת זוגכם בצורה עדינה ומפתה.\nעליו לנחש מה הוא אוכל על פי הטעם והמרקם."},{"title":"כתיבת רגליים","text":"חילצו שניכם נעליים. עליכם לנסות לכתוב מילה באוויר באמצעות כף הרגל שלכם, ובן/בת הזוג צריכים לנחש מה המילה."},{"title":"הבטחה לעתיד","text":"רשמו כעת על פתק קטן ,או שלחו בוואטסאפ, משימה מפנקת אחת שאתם מתחייבים לבצע עבור בן/בת הזוג במהלך השבוע הקרוב. למשל: ארוחת בוקר למיטה, דייט בהפתעה, או פטור משטיפת כלים או כל רעיון אחר."},{"title":"החלפת תפקידים מהירה","text":"במהלך 3 הדקות הבאות, אתם מחליפים תפקידים:\nכל אחד מכם מתנהג בדיוק כמו האחר תוך ניהול שיחה על מה תאכלו מחר."},{"title":"קשר אלסטי","text":"קשרו בעדינות את פרק היד שלכם לפרק היד של בן הזוג באמצעות צעיף, חוט או גומיות שיער. אחד עושה תנועה עם היד הקשורה על גופו ומיד לאחר מכן מתחלפים. חוזרים על הפעולה 3 פעמים."},{"title":"מלך/מלכת הפינוקים","text":"הטילו מטבע או שחקו \"אבן נייר ומספריים\". המנצח מקבל 3 דקות שבהן הוא יכול לבקש מהמפסיד כל פקודה שובבה או מפנקת שעולה בדעתו  (בגבולות הטעם הטוב כמובן)."},{"title":"מגלה הארצות","text":"עצמו את העיניים. בן/בת הזוג לוקחים את היד שלכם ומעבירים אותה בעדינות על כל הפנים שלכם, לאט לאט.\nעליכם לתאר בקול רם מה היד שלכם מרגישה בכל רגע, כאילו אתם מגלים את הפנים שלהם בפעם הראשונה.\nמחליפים תפקידים וחוזרים על המשימה."},{"title":"קרב האגודלים המלכותי","text":"שחקו ב\"קרב האגודלים\"\n(כפות הידיים שלכם נעולות יחדיו והאגודל שלכם מנסה לתפוס את אגודלו של בן/בת הזוג).\nהמנצח בקרב זוכה לקבוע חוק שובב אחד שבן/בת הזוג מחויבים לציית לו עד סוף המשחק.\n(למשל: בכל פעם שאת/ה פונה אליי, חובה עליך להוסיף את התואר \"הוד מעלתך\")"},{"title":"משחק המבטים בגרסת הנשיקה","text":"שבו מול בן/בת זוגכם והסתכלו בעיניים בלי למצמץ.\nהראשון שממצמץ או צוחק, חייב להעניק לאחר נשיקה ארוכה ומלאת תשוקה בכל מקום שיבחר."},{"title":"קוקטייל של רגשות","text":"קחו כוס משקה אחת (יין, מים או מיץ) עם שתי קשיות (או פשוט שתו לסירוגין). עליכם לשתות יחד מאותה הכוס, ותוך כדי השתייה להחליף ביניכם שלושה מבטים שונים: מבט מפתה, מבט מצחיק ומבט אוהב."},{"title":"הלוחש לאוזן","text":"במהלך שני התורות הבאים שלכם במשחק, אסור לכם לדבר בקול רם בכלל. מותר לכם לתקשר אך ורק בלחישות צמודות לאוזן של בן/בת הזוג. כל דיבור בקול רם גורר \"קנס\" של חיבוק מוחץ למשך חצי דקה."},{"title":"נקודת החן הנסתרת","text":"חשבו על שלוש נקודות חן, צלקות קטנות או סימנים מיוחדים בגוף של בן/בת הזוג. עליכם לומר להם מהן שלוש הנקודות הללו, ולספר להם זיכרון קטן או מחמאה שקשורים לכל אחת מהנקודות האלה."},{"title":"המעסה המהפנט","text":"עליך להעניק לבן/בת הזוג עיסוי בקרקפת או בצוואר במשך דקה וחצי.\nעליך לעשות זאת בצורה הכי מרגיעה ומלטפת שיש, בלי לומר מילה."},{"title":"חידון הזוגיות השובב","text":"שאלו את בן/בת הזוג שאלה לגבי ההעדפה האינטימית שלכם.\nלמשל: \"איזה סוג מגע אני הכי אוהב/ת, שמשפרים לי את מצב הרוח?\" או \"איפה המקום המועדף עלי לנשיקות?\"\nאם הם צדקו – הם מקבלים פרס לבחירתם, אם טעו – הם מפנקים אתכם בכל דרך שתרצו."},{"title":"החיבוק העוטף","text":"קומו ועמדו כאשר אחד מכם עומד מאחורי האחר ומחבק אותו בחיבוק דוב.\nעליכם להישאר בתנוחה הזו במשך דקה שלמה, להתנדנד קלות מצד לצד, ופשוט ליהנות מהתחושה של להיות עטופים יחד."}]};
+const catNames = { past:'עבר', present:'הווה', future:'עתיד', mission:'משימות', free:'בחירה חופשית', joker:"ג'וקר" };
+
+const backIconSVG = {
+  past: `<rect x="22" y="14" width="56" height="8" rx="4" stroke="rgba(255,255,255,0.85)" stroke-width="3" fill="rgba(255,255,255,0.2)"/><rect x="22" y="78" width="56" height="8" rx="4" stroke="rgba(255,255,255,0.85)" stroke-width="3" fill="rgba(255,255,255,0.2)"/><path d="M26 22 Q50 50 26 72 L74 72 Q50 50 74 22 Z" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" fill="rgba(255,255,255,0.18)" stroke-linejoin="round"/><path d="M34 72 Q50 60 66 72" stroke="rgba(255,255,255,0.7)" stroke-width="2" fill="none"/><circle cx="50" cy="61" r="2.5" fill="rgba(255,255,255,0.85)"/>`,
+  present: `<path d="M14 72 L30 64 L50 72 L70 64 L86 72 L86 84 L14 84 Z" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" fill="rgba(255,255,255,0.18)" stroke-linejoin="round"/><path d="M50 18 C38 18 30 26 30 36 C30 50 50 68 50 68 C50 68 70 50 70 36 C70 26 62 18 50 18 Z" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" fill="rgba(255,255,255,0.2)"/><circle cx="50" cy="36" r="8" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" fill="none"/>`,
+  future: `<path d="M15 55 L85 22 L58 80 L48 60 Z" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" fill="rgba(255,255,255,0.2)" stroke-linejoin="round"/><path d="M48 60 L85 22" stroke="rgba(255,255,255,0.65)" stroke-width="2"/><path d="M48 60 L55 75 L58 80" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="rgba(255,255,255,0.12)" stroke-linejoin="round"/><path d="M15 55 L48 60" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>`,
+  mission: `<path d="M28 22 L72 22 L72 82 L50 70 L28 82 Z" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" fill="rgba(255,255,255,0.2)" stroke-linejoin="round"/><line x1="40" y1="42" x2="60" y2="42" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" stroke-linecap="round"/><line x1="40" y1="52" x2="60" y2="52" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" stroke-linecap="round"/><line x1="40" y1="62" x2="54" y2="62" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" stroke-linecap="round"/>`,
+  free: `<path d="M30 68 Q50 50 70 68" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M50 20 L55 45 L50 62 L45 45 Z" stroke="rgba(255,255,255,0.85)" stroke-width="2" fill="rgba(255,255,255,0.2)" stroke-linejoin="round"/><circle cx="50" cy="66" r="4" fill="rgba(255,255,255,0.75)"/>`,
+  joker: `<path d="M28 55 Q28 35 40 38 Q42 28 50 32 Q58 28 60 38 Q72 35 72 55 L64 50 L58 62 L50 52 L42 62 L36 50 Z" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" fill="rgba(255,255,255,0.2)" stroke-linejoin="round"/><circle cx="40" cy="38" r="3" fill="rgba(255,255,255,0.8)"/><circle cx="50" cy="32" r="3" fill="rgba(255,255,255,0.8)"/><circle cx="60" cy="38" r="3" fill="rgba(255,255,255,0.8)"/><line x1="28" y1="66" x2="72" y2="66" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>`
+};
+
+const cardImageFile = { past:'past.jpg', present:'present.jpg', future:'future.jpg', mission:'task.jpg', free:'free_choice.jpg', joker:'joker.jpg' };
+const MAIN_CATS = ['past','present','future','mission','free','joker'];
+
+/* ── PLAYER TOKENS (דמויות גנריות, לא זכר/נקבה) ── */
+const TOKENS = [
+  { id:'car',        file:'token-car.png',        label:'מכונית' },
+  { id:'icecream',   file:'token-icecream.png',   label:'גלידה'  },
+  { id:'flowers',    file:'token-flowers.png',    label:'פרחים'  },
+  { id:'boat',       file:'token-boat.png',       label:'סירה'   },
+  { id:'protection', file:'token-protection.png', label:'מגן'    },
+  { id:'smile',      file:'token-smile.png',      label:'חיוך'   },
+  { id:'animal',     file:'token-animal.png',     label:'חיה'    },
+  { id:'rocket',     file:'token-rocket.png',     label:'רקטה'   },
+];
+
+function tokenImgTag(id) {
+  const t = TOKENS.find(x => x.id === id);
+  if (!t) return '';
+  return `<img src="${t.file}" alt="${t.label}" style="width:100%;height:100%;object-fit:contain;">`;
+}
+function tokenSVG(id) { return tokenImgTag(id); } // שם נשמר לתאימות לקריאות קיימות
+
+let charSelectStep = 1;
+
+function getPlayerTokens() {
+  const p1raw = localStorage.getItem('ladatOdPlayer1Token');
+  const p2raw = localStorage.getItem('ladatOdPlayer2Token');
+  const isValid = id => TOKENS.some(t => t.id === id);
+  return {
+    p1: isValid(p1raw) ? p1raw : null,
+    p2: isValid(p2raw) ? p2raw : null,
+  };
+}
+function savePlayerToken(playerNum, tokenId) {
+  localStorage.setItem('ladatOdPlayer' + playerNum + 'Token', tokenId);
+}
+
+function renderCharSelectStep() {
+  const tokens = getPlayerTokens();
+  charSelectStep = tokens.p1 ? 2 : 1;
+
+  const title = document.getElementById('charSelectTitle');
+  title.textContent = charSelectStep === 1 ? 'שחקן/ית 1 — בחרו דמות' : 'שחקן/ית 2 — בחרו דמות';
+
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+  TOKENS.forEach(t => {
+    const btn = document.createElement('div');
+    const isTaken = charSelectStep === 2 && t.id === tokens.p1;
+    btn.className = 'char-option' + (isTaken ? ' taken' : '');
+    btn.innerHTML = tokenImgTag(t.id);
+    if (!isTaken) btn.onclick = () => pickCharacter(t.id, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function pickCharacter(tokenId, btnEl) {
+  btnEl.classList.add('picked-anim');
+  const tokens = getPlayerTokens();
+
+  if (charSelectStep === 1) {
+    savePlayerToken(1, tokenId);
+    setTimeout(renderCharSelectStep, 250);
+  } else {
+    savePlayerToken(2, tokenId);
+    setCurrentTurn(1);
+    setTimeout(enterGamePage, 250);
+  }
+}
+
+/* ── TURNS ── */
+function getCurrentTurn() {
+  return parseInt(localStorage.getItem('ladatOdCurrentTurn') || '1', 10);
+}
+function setCurrentTurn(n) {
+  localStorage.setItem('ladatOdCurrentTurn', String(n));
+}
+function toggleTurn() {
+  setCurrentTurn(getCurrentTurn() === 1 ? 2 : 1);
+}
+function renderTurnIndicator() {
+  const tokens = getPlayerTokens();
+  const turn = getCurrentTurn();
+  const tokenId = turn === 1 ? tokens.p1 : tokens.p2;
+  const el = document.getElementById('turnTokenIcon');
+  if (!el) return;
+  el.innerHTML = tokenId ? tokenSVG(tokenId) : '';
+}
+
+/* ── USED-QUESTIONS TRACKING (מונע חזרה על אותה שאלה) ── */
+function getUsedMap() {
+  try {
+    return JSON.parse(localStorage.getItem('ladatOdUsedQuestions') || '{}');
+  } catch (e) { return {}; }
+}
+function saveUsedMap(map) {
+  localStorage.setItem('ladatOdUsedQuestions', JSON.stringify(map));
+}
+function pickUnusedQuestion(category) {
+  const qs = questions[category];
+  const map = getUsedMap();
+  const used = new Set(map[category] || []);
+
+  let available = [];
+  for (let i = 0; i < qs.length; i++) if (!used.has(i)) available.push(i);
+
+  if (available.length === 0) {
+    return null; /* החפיסה נגמרה - לא מאפסים אוטומטית */
+  }
+
+  const idx = available[Math.floor(Math.random() * available.length)];
+  return { idx, q: qs[idx] };
+}
+function isCategoryExhausted(category) {
+  const qs = questions[category];
+  const map = getUsedMap();
+  const used = new Set(map[category] || []);
+  return used.size >= qs.length;
+}
+function updateDeckExhaustionStates() {
+  MAIN_CATS.forEach(c => {
+    const deckEl = document.getElementById('deck-' + c);
+    if (!deckEl) return;
+    deckEl.classList.toggle('deck-exhausted', isCategoryExhausted(c));
+  });
+}
+function markQuestionUsed(category, idx) {
+  const map = getUsedMap();
+  const used = new Set(map[category] || []);
+  used.add(idx);
+  map[category] = Array.from(used);
+  saveUsedMap(map);
+}
+function renderPileCount() {
+  const el = document.getElementById('pileCount');
+  if (!el) return;
+  const map = getUsedMap();
+  const total = MAIN_CATS.reduce((sum, c) => sum + (questions[c] ? questions[c].length : 0), 0);
+  const usedTotal = MAIN_CATS.reduce((sum, c) => sum + (map[c] ? map[c].length : 0), 0);
+  el.textContent = `${usedTotal} מתוך ${total}`;
+}
+
+let currentQuestionIdx = null;
+let currentQuestionCat = null;
+
+function confirmResetProgress() {
+  const ok = confirm('לאפס את כל ההתקדמות? הקלפים שכבר נענו יחזרו להיות זמינים, והדמויות ייבחרו מחדש.');
+  if (!ok) return;
+
+  localStorage.removeItem('ladatOdUsedQuestions');
+  localStorage.removeItem('ladatOdPlayer1Token');
+  localStorage.removeItem('ladatOdPlayer2Token');
+  localStorage.removeItem('ladatOdCurrentTurn');
+
+  document.getElementById('page-game').classList.remove('active');
+  document.getElementById('page-characters').classList.add('active');
+  renderCharSelectStep();
+  window.scrollTo(0,0);
+}
+
+let currentCategory = '';
+let picked = false;
+let cardIsFlipped = false;
+
+/* ── 3D DICE ── */
+const diceFaces = [
+  { rx:0,   ry:0,   category:'past'    },
+  { rx:0,   ry:180, category:'present' },
+  { rx:0,   ry:-90, category:'future'  },
+  { rx:0,   ry:90,  category:'mission' },
+  { rx:-90, ry:0,   category:'joker'   },
+  { rx:90,  ry:0,   category:'free'    }
+];
+
+let diceAbsRX = -25, diceAbsRY = 35, diceSpinning = false;
+
+function rollDice() {
+  if (diceSpinning) return;
+  diceSpinning = true;
+
+  const cube = document.getElementById('diceCube');
+
+  document.getElementById('diceResult').classList.remove('show');
+  picked = false;
+
+  MAIN_CATS.forEach(c =>
+    document.getElementById('deck-' + c).classList.remove('highlighted')
+  );
+
+  const spinRX = diceAbsRX + 360 * 5 + Math.floor(Math.random() * 360);
+  const spinRY = diceAbsRY + 360 * 5 + Math.floor(Math.random() * 360);
+  cube.style.transition = 'transform 1.4s cubic-bezier(0.23,1,0.32,1)';
+  cube.style.transform = `rotateX(${spinRX}deg) rotateY(${spinRY}deg)`;
+
+  setTimeout(() => {
+    const f = diceFaces[Math.floor(Math.random() * 6)];
+    const baseRX = Math.round(spinRX / 360) * 360;
+    const baseRY = Math.round(spinRY / 360) * 360;
+    const landRX = baseRX + f.rx;
+    const landRY = baseRY + f.ry;
+    diceAbsRX = landRX;
+    diceAbsRY = landRY;
+    cube.style.transition = 'transform 0.7s cubic-bezier(0.175,0.885,0.32,1.275)';
+    cube.style.transform = `rotateX(${landRX}deg) rotateY(${landRY}deg)`;
+
+    setTimeout(() => {
+      diceSpinning = false;
+      handleDiceResult(f.category);
+    }, 750);
+  }, 1450);
+}
+
+function handleDiceResult(category) {
+  const result = document.getElementById('diceResult');
+  result.textContent = catNames[category];
+  result.className = 'dice-result show ' + category;
+  picked = true;
+  currentCategory = category;
+  MAIN_CATS.forEach(c =>
+    document.getElementById('deck-' + c).classList.toggle('highlighted', c === category)
+  );
+  setTimeout(() => drawCard(category), 500);
+}
+
+function drawCard(category) {
+  if (diceSpinning) return;
+  if (picked && category !== currentCategory) return;
+  if (!picked) currentCategory = category;
+
+  const picked_q = pickUnusedQuestion(category);
+  if (!picked_q) {
+    const result = document.getElementById('diceResult');
+    result.textContent = 'סיימתם את כל הקלפים בחפיסת ' + catNames[category] + '! אפשר לאפס כדי לשחק שוב';
+    result.className = 'dice-result show ' + category;
+    MAIN_CATS.forEach(c => document.getElementById('deck-' + c).classList.remove('highlighted'));
+    updateDeckExhaustionStates();
+    picked = false;
+    return;
+  }
+
+  const modal = document.getElementById('modal');
+  const card  = document.getElementById('card');
+
+  cardIsFlipped = false;
+  card.classList.remove('flipped');
+  card.className = 'card card-' + category;
+  modal.className = 'modal-overlay active bg-' + category;
+
+  const q = picked_q.q;
+  currentQuestionIdx = picked_q.idx;
+  currentQuestionCat = category;
+
+  const backImg = document.getElementById('backImg');
+  backImg.src = cardImageFile[category];
+  backImg.alt = catNames[category];
+
+  const mhi = document.getElementById('modalHeaderIcon');
+  mhi.innerHTML = backIconSVG[category];
+  document.getElementById('modalHeaderLabel').textContent = catNames[category];
+
+  const qEl = document.getElementById('questionText');
+  if (q && typeof q === 'object') {
+    qEl.innerHTML = '';
+    const titleEl = document.createElement('strong');
+    titleEl.className = 'joker-title';
+    titleEl.textContent = q.title;
+    qEl.appendChild(titleEl);
+    qEl.appendChild(document.createTextNode(q.text));
+  } else {
+    qEl.textContent = q;
+  }
+
+  const askHintEl = document.getElementById('askHint');
+  if (category === 'past' || category === 'present' || category === 'future') {
+    askHintEl.textContent = 'שאל/י את מי שמולך את השאלה:';
+    askHintEl.classList.add('show');
+  } else {
+    askHintEl.classList.remove('show');
+    askHintEl.textContent = '';
+  }
+
+  document.getElementById('categoryLabel').textContent    = catNames[category];
+
+  modal.classList.add('active');
+
+  /* הקלף נפתח אוטומטית */
+  setTimeout(() => {
+    card.classList.add('flipped');
+    cardIsFlipped = true;
+  }, 350);
+}
+
+function handleCardClick() {
+  if (!cardIsFlipped) return;
+  const card = document.getElementById('card');
+  card.classList.remove('flipped');
+  cardIsFlipped = false;
+  setTimeout(closeModal, 750);
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.className = 'modal-overlay';
+  document.getElementById('card').classList.remove('flipped');
+  cardIsFlipped = false;
+  picked = false;
+
+  MAIN_CATS.forEach(c =>
+    document.getElementById('deck-' + c).classList.remove('highlighted')
+  );
+  document.getElementById('diceResult').classList.remove('show');
+
+  if (currentQuestionIdx !== null && currentQuestionCat !== null) {
+    markQuestionUsed(currentQuestionCat, currentQuestionIdx);
+    currentQuestionIdx = null;
+    currentQuestionCat = null;
+    renderPileCount();
+    updateDeckExhaustionStates();
+    toggleTurn();
+    renderTurnIndicator();
+  }
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ── PWA: service worker + install prompt ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.add('show');
+});
+
+function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.classList.remove('show');
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('show');
+});
+</script>
+
+<!-- ══════════════════════════════════════
+     AUTHENTICATION (Firebase)
+     ⚠️ יש להחליף את הערכים למטה בערכים האמיתיים
+     מקונסולת Firebase שלך: Project settings > General > Your apps > SDK setup
+══════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
+  import {
+    getAuth, setPersistence, browserLocalPersistence,
+    onAuthStateChanged, signInWithEmailAndPassword,
+    sendPasswordResetEmail, signOut
+  } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME.firebaseapp.com",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME.appspot.com",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence);
+
+  const pageSplash    = document.getElementById('page-splash');
+  const pageLogin     = document.getElementById('page-login');
+  const pageIntro     = document.getElementById('page-intro');
+  const loginLoading  = document.getElementById('loginLoading');
+  const loginForm     = document.getElementById('loginForm');
+  const splashLoader   = document.getElementById('splashLoader');
+  const splashEnterBtn = document.getElementById('splashEnterBtn');
+
+  /* מסך הפתיחה נשאר על המסך עד שהמשתמש/ת לוחצים עליו. בינתיים,
+     ברקע, בודקים מול Firebase אם כבר יש התחברות פעילה. ברגע שהבדיקה
+     מסתיימת, מוחלף חיווי הטעינה בהזמנה "הקישו להמשך". הלחיצה עצמה
+     היא זו שמעבירה בפועל לדף הבא (התחברות או הקדמה, לפי המצב). */
+  let userTapped = false;
+  let authResolved = false;
+  let authedUser = null;
+
+  pageSplash.addEventListener('click', () => {
+    userTapped = true;
+    trySplashDone();
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    authResolved = true;
+    authedUser = user;
+    splashLoader.classList.add('hide');
+    splashEnterBtn.classList.add('show');
+    trySplashDone();
+  });
+
+  function trySplashDone() {
+    if (!userTapped || !authResolved) return;
+    loginLoading.style.display = 'none';
+
+    pageSplash.classList.add('splash-fade-out');
+    setTimeout(() => {
+      pageSplash.classList.remove('active');
+      if (authedUser) {
+        loginForm.style.display = 'none';
+        pageLogin.classList.remove('active');
+        pageIntro.classList.add('active');
+      } else {
+        loginForm.style.display = 'block';
+        pageLogin.classList.add('active');
+        pageIntro.classList.remove('active');
+      }
+    }, 400);
+  }
+
+  window.doLogin = function () {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.color = '#c0392b';
+    errEl.textContent = '';
+
+    if (!email || !password) {
+      errEl.textContent = 'נא למלא אימייל וסיסמה';
+      return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password).catch(() => {
+      errEl.textContent = 'אימייל או סיסמה שגויים, או שהחשבון עדיין לא הופעל';
+    });
+  };
+
+  window.doForgotPassword = function () {
+    const email = document.getElementById('loginEmail').value.trim();
+    const errEl = document.getElementById('loginError');
+    errEl.style.color = '#c0392b';
+
+    if (!email) {
+      errEl.textContent = 'נא להזין קודם את כתובת האימייל שלכם למעלה';
+      return;
+    }
+
+    sendPasswordResetEmail(auth, email).then(() => {
+      errEl.style.color = '#2a7d2a';
+      errEl.textContent = 'נשלח מייל לאיפוס סיסמה, בדקו את תיבת הדואר';
+    }).catch(() => {
+      errEl.style.color = '#c0392b';
+      errEl.textContent = 'שגיאה בשליחת המייל, נסו שוב';
+    });
+  };
+
+  window.doSignOut = function () {
+    signOut(auth);
+  };
+</script>
+</body>
+</html>
